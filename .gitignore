@@ -1,0 +1,29 @@
+# Generated builds and test results
+*.dll
+*.exe
+*.pdb
+bin/
+obj/
+build/
+Validacion/Resultado*.txt
+Validacion/SHA256.csv
+
+# Local datasets and backtest exports
+Backtests/
+ExperimentoA/
+Respaldo*/
+*.csv
+*.zip
+*.ntd
+*.nrd
+
+# Local editor files and credentials
+.vs/
+.vscode/
+*.user
+.env
+.env.*
+!.env.example
+Thumbs.db
+Desktop.ini
+
