@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -14,6 +14,10 @@ namespace NinjaTrader.NinjaScript.Strategies
     {
         private const string Entry = "ExpA_Long", TimedExit = "ExpA_Close";
         private MAS_SesionNY mas;
+        private SessionIterator sessionIterator;
+        private DateTime sessionEnd, templateEnd, effectiveClose, closeRequestTime;
+        private string referenceIncluded = "", referenceExcluded = "";
+        private bool latePositionReported;
         private ExperimentoAPlan plan;
         private readonly HashSet<DateTime> attempted = new HashSet<DateTime>();
         private readonly HashSet<string> executions = new HashSet<string>();
@@ -48,6 +52,7 @@ namespace NinjaTrader.NinjaScript.Strategies
                 IsInstantiatedOnEachOptimizationIteration = true;
                 HoraEntrada = new TimeSpan(9, 35, 0);
                 HoraCierre = new TimeSpan(15, 0, 0);
+                MargenCierreMinutos = 2;
                 SesionesMAS = 5;
                 TipoMedia = TipoMediaMAS.Simple;
                 PorcentajeMAS = 40;
@@ -65,14 +70,15 @@ namespace NinjaTrader.NinjaScript.Strategies
             else if (State == State.DataLoaded)
             {
                 ValidateConfiguration();
-                mas = MAS_SesionNY(SesionesMAS, TipoMedia, PorcentajeMAS, false, false, false, Diagnostico);
+                sessionIterator = new SessionIterator(Bars);
+                mas = MAS_SesionNYCalendario(SesionesMAS, TipoMedia, PorcentajeMAS, Diagnostico);
                 mas.Calculate = Calculate.OnBarClose;
                 runId = Guid.NewGuid().ToString("N");
                 string folder = Path.Combine(Core.Globals.UserDataDir, "ExperimentoA");
                 Directory.CreateDirectory(folder);
                 csv = new StreamWriter(Path.Combine(folder, runId + ".csv"), false, new System.Text.UTF8Encoding(true));
                 csv.AutoFlush = false;
-                csv.WriteLine("run,instrument,mode,session,event_time_ny,series,zone,tick_size,point_value,entry_time_ny,close_time_ny,roundtrip_fee,event,reason,requested,filled,exited,open,mas,reference,sl_points,tp_points,reference_difference,expected_commission,expected_loss,expected_gain,entry_average,exit_average,mark,gross_realised,gross_unrealised,commission_paid,net_liquidation,mae_net,mfe_net,mae_gross,mfe_gross,equity_net,excursion_resolution,bar_high,bar_low,timestamp_kind");
+                csv.WriteLine("run,instrument,mode,session,event_time_ny,series,zone,tick_size,point_value,entry_time_ny,close_time_ny,roundtrip_fee,event,reason,requested,filled,exited,open,mas,reference,sl_points,tp_points,reference_difference,expected_commission,expected_loss,expected_gain,entry_average,exit_average,mark,gross_realised,gross_unrealised,commission_paid,net_liquidation,mae_net,mfe_net,mae_gross,mfe_gross,equity_net,excursion_resolution,bar_high,bar_low,timestamp_kind,release,calendar,mas_included,mas_excluded,session_end_ny,template_end_ny,effective_close_ny,close_request_ny,margin_minutes,mas_sessions,mas_type,mas_percent,min_contracts,max_contracts,tp_net,sl_budget,assembly_mvid");
                 Print(Name + " | CSV: " + folder + "\\" + runId + ".csv | Zona: " + zoneId);
             }
             else if (State == State.Realtime)
@@ -100,8 +106,13 @@ namespace NinjaTrader.NinjaScript.Strategies
             LogClosedBarRange();
             if (plan != null && !completed)
             {
+                if (inventory > 0 && eventTime >= sessionEnd && !latePositionReported)
+                {
+                    latePositionReported = true;
+                    Log("WARNING", "SESSION_END_PASSED_WITH_OPEN_POSITION: missing events or unfilled exit; inspect FILL timestamps");
+                }
                 if (eventTime >= tradeDate.Add(HoraEntrada).AddMinutes(1)) RequestCancel();
-                if (eventTime >= tradeDate.Add(HoraCierre)) closing = true;
+                if (eventTime >= effectiveClose) closing = true;
                 if (closing) { RequestCancel(); Flatten(); }
                 if (inventory > 0) Mark("MINUTE_CLOSE_SAMPLED");
                 FinishIfSettled();
@@ -110,8 +121,14 @@ namespace NinjaTrader.NinjaScript.Strategies
                 !ExperimentoAMath.IsEntryBar(eventTime, HoraEntrada) || eventTime.TimeOfDay >= HoraCierre ||
                 attempted.Contains(eventTime.Date)) return;
 
-            // Force hosted publication; reject stale or unavailable references instead of substituting zero.
             mas.Update();
+            referenceIncluded = mas.FechaAplicacion == eventTime.Date ? mas.SesionesIncluidas : "";
+            referenceExcluded = mas.FechaAplicacion == eventTime.Date ? mas.SesionesExcluidas : "";
+            string scheduleError;
+            if (!PrepareSchedule(out scheduleError)) {
+                attempted.Add(eventTime.Date); ClearForSkip(); Log("SKIP", scheduleError); return;
+            }
+            // Force hosted publication; reject stale or unavailable references instead of substituting zero.
             if (!mas.EsValida || mas.FechaAplicacion != eventTime.Date || mas.SesionesUtilizadas != SesionesMAS ||
                 !FinitePositive(mas.MAS_Activa_Puntos) || mas.UltimaSesionIncluida >= eventTime.Date)
             {
@@ -134,11 +151,28 @@ namespace NinjaTrader.NinjaScript.Strategies
             EnterLong(0, plan.Quantity, Entry);
         }
 
+        private bool PrepareSchedule(out string error)
+        {
+            error=""; sessionEnd=templateEnd=effectiveClose=closeRequestTime=DateTime.MinValue;
+            if (Instrument.MasterInstrument.Name != "MNQ" && Instrument.MasterInstrument.Name != "NQ") { error="UNSUPPORTED_CALENDAR_INSTRUMENT"; return false; }
+            bool regular; string reason;
+            if (!CalendarioSesionesNY.Resolve(eventTime.Date,out sessionEnd,out regular,out reason)) { error=reason; return false; }
+            if (sessionEnd==DateTime.MinValue) { error=reason; return false; }
+            sessionIterator.GetNextSession(eventTime,true);
+            templateEnd=sessionIterator.ActualSessionEnd;
+            if (sessionIterator.ActualSessionBegin>eventTime || templateEnd<=eventTime || templateEnd.Date!=eventTime.Date) { error="UNRELIABLE_TEMPLATE_SESSION_BOUNDARY"; return false; }
+            sessionEnd = sessionEnd<templateEnd?sessionEnd:templateEnd;
+            effectiveClose=CalendarioSesionesNY.Cutoff(eventTime.Date,HoraCierre,sessionEnd,MargenCierreMinutos);
+            if(effectiveClose<eventTime.Date.Add(HoraEntrada).AddMinutes(1)) { error="NO_ENTRY_WINDOW_BEFORE_EFFECTIVE_CLOSE"; return false; }
+            return true;
+        }
+
         private void ResetCampaign(ExperimentoAPlan next)
         {
             plan = next; tradeDate = eventTime.Date; activeMas = mas.MAS_Activa_Puntos;
             entryOrder = closeOrder = null;
             closing = completed = cancelEntry = cancelSent = closeRequested = entryTerminal = false;
+            latePositionReported = false;
             reportedEntryFills = bought = sold = inventory = 0;
             buyValue = sellValue = inventoryCost = realised = mae = mfe = maeGross = mfeGross = 0;
             exitReasons = "";
@@ -197,7 +231,7 @@ namespace NinjaTrader.NinjaScript.Strategies
                 // Historical minute fills may carry the next bar's CLOSE label.
                 // Use closed-bar scheduling there; do not treat that label as wall-clock execution time.
                 if (State != State.Historical && time >= tradeDate.Add(HoraEntrada).AddMinutes(1)) RequestCancel();
-                if ((State != State.Historical && time >= tradeDate.Add(HoraCierre)) || sold > 0) closing = true;
+                if ((State != State.Historical && time >= effectiveClose) || sold > 0) closing = true;
             }
             else if (execution.Order != null && execution.Order.OrderAction == OrderAction.Sell)
             {
@@ -244,7 +278,8 @@ namespace NinjaTrader.NinjaScript.Strategies
             // Managed ExitLong uses actual strategy position; no requested-size assumptions.
             if (inventory <= 0 || closeRequested || Position.MarketPosition != MarketPosition.Long) return;
             closeRequested = true;
-            Log("CLOSE_REQUEST", fatal ? "ORDER_ERROR" : (sold > 0 ? "EXIT_RACE" : "TIME_CLOSE"));
+            closeRequestTime = eventTime;
+            Log("CLOSE_REQUEST", eventTime >= sessionEnd ? "LATE_NO_EVENT_BEFORE_SESSION_END" : fatal ? "ORDER_ERROR" : (sold > 0 ? "EXIT_RACE" : "TIME_CLOSE"));
             ExitLong(0, Position.Quantity, TimedExit, Entry);
         }
 
@@ -306,7 +341,10 @@ namespace NinjaTrader.NinjaScript.Strategies
                 realised, unrealised, PaidCommission(), net, mae, mfe, maeGross, mfeGross, cumulativeNet + (completed ? 0 : net),
                 "minute_closes_and_fills_not_intrabar", kind == "BAR_RANGE" ? Highs[0][0] : double.NaN,
                 kind == "BAR_RANGE" ? Lows[0][0] : double.NaN,
-                kind == "FILL" ? (State == State.Historical ? "historical_engine_fill_timestamp" : "execution_timestamp") : "closed_bar_or_order_callback" };
+                kind == "FILL" ? (State == State.Historical ? "historical_engine_fill_timestamp" : "execution_timestamp") : "closed_bar_or_order_callback", CalendarioSesionesNY.Release, CalendarioSesionesNY.Version,
+                referenceIncluded, referenceExcluded,
+                sessionEnd, templateEnd, effectiveClose, closeRequestTime, MargenCierreMinutos, SesionesMAS, TipoMedia, PorcentajeMAS,
+                MinContratos, MaxContratos, TP_Neto_USD, SL_Neto_USD, GetType().Assembly.ManifestModule.ModuleVersionId };
             csv.WriteLine(string.Join(",", fields.Select(v => "\"" + Convert.ToString(v, CultureInfo.InvariantCulture).Replace("\"", "\"\"") + "\"")));
             if (Diagnostico && kind != "MARK") Print(Name + " | " + eventTime + " NY | " + kind + " | " + reason);
         }
@@ -334,12 +372,13 @@ namespace NinjaTrader.NinjaScript.Strategies
                 !FinitePositive(TickSize) || !FinitePositive(Instrument.MasterInstrument.PointValue) ||
                 !FinitePositive(PorcentajeMAS) || !FinitePositive(SL_Neto_USD) || !FinitePositive(TP_Neto_USD) ||
                 HoraEntrada.Ticks % TimeSpan.TicksPerMinute != 0 || HoraCierre.Ticks % TimeSpan.TicksPerMinute != 0 ||
-                SesionesMAS < 1 || SesionesMAS > 100 || ComisionPorContrato < 0 || double.IsNaN(ComisionPorContrato) || double.IsInfinity(ComisionPorContrato))
+                MargenCierreMinutos < 2 || MargenCierreMinutos > 120 || SesionesMAS < 1 || SesionesMAS > 100 || ComisionPorContrato < 0 || double.IsNaN(ComisionPorContrato) || double.IsInfinity(ComisionPorContrato))
                 throw new ArgumentException("Parámetros Experimento A no válidos.");
         }
 
         [NinjaScriptProperty, Display(Name="Hora entrada NY", GroupName="Horario", Order=1)] public TimeSpan HoraEntrada { get; set; }
         [NinjaScriptProperty, Display(Name="Hora cierre NY", GroupName="Horario", Order=2)] public TimeSpan HoraCierre { get; set; }
+        [NinjaScriptProperty, Range(2,120), Display(Name="Margen cierre minutos", GroupName="Horario", Order=3)] public int MargenCierreMinutos { get; set; }
         [NinjaScriptProperty, Range(1,100), Display(Name="Sesiones MAS", GroupName="MAS", Order=1)] public int SesionesMAS { get; set; }
         [NinjaScriptProperty, Display(Name="Tipo media", GroupName="MAS", Order=2)] public TipoMediaMAS TipoMedia { get; set; }
         [NinjaScriptProperty, Range(0.0001,double.MaxValue), Display(Name="Porcentaje MAS", GroupName="MAS", Order=3)] public double PorcentajeMAS { get; set; }

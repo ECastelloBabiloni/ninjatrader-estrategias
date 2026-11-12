@@ -14,6 +14,8 @@ Código NinjaScript de desarrollo para histórico, Playback101 y Sim101.
 
 ## Versión vigente
 
+Entrega 12/11/2026: [selección de sesiones regulares y cierre anticipado](docs/Entrega_2026-11-12.md). Código y pruebas externas completados; **F5, pruebas en plataforma y BT003 pendientes**. La nueva guía prevalece sobre las instrucciones históricas del 11/11.
+
 Gráfico de **un minuto**, Calculate.OnBarClose. Al cierre etiquetado 09:35 NY solicita compra a mercado para la siguiente apertura/evento disponible. No exige series de ticks. Una solicitud por fecha, sin reentrada; cierre configurable inicial 15:00 NY.
 
 MAS compartido: cinco sesiones anteriores, media simple, 40 %. Dimensionamiento con TickSize y PointValue reales del instrumento, contratos enteros y ajustes SL/TP por comisiones. La estrategia conserva protección managed por ejecución y está restringida en tiempo real a Sim101/Playback101.
@@ -22,6 +24,7 @@ MAS compartido: cinco sesiones anteriores, media simple, 40 %. Dimensionamiento 
 
 1. Copiar los archivos de `Strategies` a `Documents/NinjaTrader 8/bin/Custom/Strategies`.
 2. Copiar `Indicators/MAS_SesionNY.cs` a `Documents/NinjaTrader 8/bin/Custom/Indicators`. Mantener una sola definición.
+   Copiar también los dos fuentes de `AddOns` a `Documents/NinjaTrader 8/bin/Custom/AddOns`; son necesarios para el calendario y la fábrica compatible.
 3. No copiar las pruebas ni las herramientas dentro de Custom.
 4. Compilar con F5 en NinjaScript Editor. Añadir la estrategia a un gráfico de 1 minuto, con Tick Replay desactivado y NinjaTrader configurado en Nueva York con horario estacional.
 

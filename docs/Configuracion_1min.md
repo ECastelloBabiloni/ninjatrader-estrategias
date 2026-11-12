@@ -1,3 +1,5 @@
+ACTUALIZACIÓN 12/11/2026: consultar docs/Entrega_2026-11-12.md. Ahora también se requieren los dos auxiliares de AddOns; Experimento A usa selección por calendario y margen de cierre de 2 minutos. F5 y BT003 pendientes. El texto siguiente conserva la guía histórica del 11/11.
+
 # Experimento A — versión de un minuto, 11 de noviembre de 2026
 
 Esta versión sustituye el requisito de gráfico de un tick. Usa gráfico principal de **1 minuto**, cálculo **OnBarClose** y una serie interna también de un minuto para reutilizar el MAS. No añade ni requiere histórico de ticks. Tick Replay desactivado.

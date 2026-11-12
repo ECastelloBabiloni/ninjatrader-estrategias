@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$NtBin = 'C:\Program Files\NinjaTrader 8\bin',
     [string]$NtCustom = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'NinjaTrader 8\bin\Custom')
 )
@@ -12,7 +12,7 @@ $references += @('WindowsBase.dll','PresentationCore.dll','PresentationFramework
 $references += @('NinjaTrader.Core.dll','NinjaTrader.Gui.dll','SharpDX.dll','SharpDX.Direct2D1.dll') | ForEach-Object { Join-Path $NtBin $_ }
 $references += Join-Path $NtCustom 'NinjaTrader.Custom.dll'
 $sources = @((Join-Path $NtCustom 'Strategies\@Strategy.cs'),(Join-Path $NtCustom 'Indicators\@Indicator.cs'),(Join-Path $NtCustom 'MarketAnalyzerColumns\@MarketAnalyzerColumn.cs'))
-$sources += Get-ChildItem -LiteralPath (Join-Path $projectDir 'Strategies'),(Join-Path $projectDir 'Indicators') -Filter '*.cs' | Select-Object -ExpandProperty FullName
+$sources += Get-ChildItem -LiteralPath (Join-Path $projectDir 'Strategies'),(Join-Path $projectDir 'Indicators'),(Join-Path $projectDir 'AddOns') -Filter '*.cs' | Select-Object -ExpandProperty FullName
 $arguments = @('/nologo','/target:library','/platform:x64',('/out:' + (Join-Path $buildDir 'Review.dll')))
 $arguments += $references | ForEach-Object { '/reference:' + $_ }
 & (Join-Path $fwDir 'csc.exe') @arguments @sources

@@ -1,4 +1,4 @@
-// MAS_SesionNY - NinjaTrader 8
+﻿// MAS_SesionNY - NinjaTrader 8
 // Media de Amplitud de Sesión NY: indicador informativo; no envía órdenes.
 
 #region Using declarations
@@ -19,10 +19,14 @@ using NinjaTrader.NinjaScript.DrawingTools;
 
 namespace NinjaTrader.NinjaScript.Indicators
 {
+	public enum ModoSesionesMAS { Compatibilidad, RegularesCalendario }
 	public enum TipoMediaMAS { Simple, PonderadaLineal }
 
 	public class MAS_SesionNY : Indicator
 	{
+		[Browsable(false)] public ModoSesionesMAS ModoSeleccion { get; set; }
+		[Browsable(false), XmlIgnore] public string SesionesIncluidas { get; private set; }
+		[Browsable(false), XmlIgnore] public string SesionesExcluidas { get; private set; }
 		private const int MinutosSesionRegular = 390;
 		private readonly TimeSpan inicioRth = new TimeSpan(9, 30, 0);
 		private readonly TimeSpan finRth = new TimeSpan(16, 0, 0);
@@ -50,6 +54,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 			public DateTime Fecha;
 			public bool Valida;
 			public string Estado;
+			public string Excluidas = "";
 			public double Simple = double.NaN;
 			public double Ponderada = double.NaN;
 			public double Activa = double.NaN;
@@ -195,7 +200,7 @@ namespace NinjaTrader.NinjaScript.Indicators
 			ReferenciaMas referencia = new ReferenciaMas { Fecha = fecha, Estado = "Datos insuficientes." };
 			List<SesionMas> anteriores = sesiones.Where(s => s.Fecha < fecha).OrderByDescending(s => s.Fecha).ToList();
 
-			if (anteriores.Count < SesionesMedia)
+			if (ModoSeleccion == ModoSesionesMAS.Compatibilidad && anteriores.Count < SesionesMedia)
 			{
 				referencia.Estado = "Datos insuficientes: " + anteriores.Count + " de " + SesionesMedia + " sesiones anteriores.";
 				referencias[fecha] = referencia;
@@ -203,7 +208,19 @@ namespace NinjaTrader.NinjaScript.Indicators
 			}
 
 			List<SesionMas> seleccion = anteriores.Take(SesionesMedia).OrderBy(s => s.Fecha).ToList();
-			SesionMas defectuosa = seleccion.FirstOrDefault(s => !s.Finalizada || s.Incompleta);
+			if (ModoSeleccion == ModoSesionesMAS.RegularesCalendario)
+            {
+                List<DateTime> dates; string excluded, error;
+                bool ok = CalendarioSesionesNY.Select(fecha, SesionesMedia, d => {
+                    SesionMas found = anteriores.FirstOrDefault(x => x.Fecha == d);
+                    return found == null ? "REGULAR_DATA_ABSENT" :
+                        (!found.Finalizada || found.Incompleta ? "REGULAR_DATA_INCOMPLETE:" + (string.IsNullOrEmpty(found.Motivo) ? "No se completó el intervalo 09:30–16:00." : found.Motivo) : "");
+                }, out dates, out excluded, out error);
+                referencia.Excluidas = excluded;
+                seleccion = dates.Select(d => anteriores.First(x => x.Fecha == d)).ToList();
+                if (!ok) { referencia.Estado = error; referencia.Usadas = seleccion; referencias[fecha] = referencia; return; }
+            }
+            SesionMas defectuosa = seleccion.FirstOrDefault(s => !s.Finalizada || s.Incompleta);
 			if (defectuosa != null)
 			{
 				referencia.Estado = "Sesión no válida " + defectuosa.Fecha.ToString("yyyy-MM-dd") + ": " + defectuosa.Motivo;
@@ -232,6 +249,8 @@ namespace NinjaTrader.NinjaScript.Indicators
 
 		private void PublicarReferencia(DateTime fecha)
 		{
+			if (ModoSeleccion == ModoSesionesMAS.RegularesCalendario && sesionEnCurso != null && sesionEnCurso.Fecha < fecha && !sesionEnCurso.Finalizada)
+				FinalizarSesion("No se completó el intervalo 09:30–16:00.");
 			AsegurarReferencia(fecha);
 			ReferenciaMas referencia = referencias[fecha];
 			ActualizarPropiedades(referencia);
@@ -258,6 +277,8 @@ namespace NinjaTrader.NinjaScript.Indicators
 			DistanciaSLTPTicks = referencia.Valida ? referencia.Ticks : -1;
 			DistanciaSLTPPuntos = referencia.Puntos;
 			EstadoCalculo = referencia.Estado;
+			SesionesIncluidas = string.Join("|", referencia.Usadas.Select(x => x.Fecha.ToString("yyyy-MM-dd")));
+			SesionesExcluidas = referencia.Excluidas;
 			UltimaSesionIncluida = referencia.Usadas.Count == 0 ? DateTime.MinValue : referencia.Usadas.Last().Fecha;
 		}
 
