@@ -27,3 +27,12 @@ Respaldo*/
 Thumbs.db
 Desktop.ini
 
+# Python and private simulation outputs
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+Simulador/resultados/
+Simulador/datos/
+*.xlsx
+

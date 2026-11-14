@@ -11,6 +11,7 @@ Código NinjaScript de desarrollo para histórico, Playback101 y Sim101.
 | [Validacion](Validacion) | Pruebas de cálculos/horarios y compilación externa con bibliotecas NinjaTrader instaladas |
 | [Herramientas](Herramientas) | Exportador de resúmenes de los CSV de la estrategia |
 | [docs](docs) | Configuración, instalación, limitaciones y estado de validación |
+| [Simulador](Simulador) | Python: estimación de evaluaciones LucidFlex 50K con cierres; aprobaciones condicionales, pruebas sintéticas y perfil configurable |
 
 ## Versión vigente
 
