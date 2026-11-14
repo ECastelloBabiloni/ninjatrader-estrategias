@@ -24,7 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description='Estimación con operaciones cerradas, aprobaciones condicionales')
     parser.add_argument('--bt-root', required=True, type=Path)
     parser.add_argument('--originals-zip', type=Path)
-    parser.add_argument('--profile', type=Path, default=Path(__file__).with_name('perfil_lucidflex_50k.json'))
+    parser.add_argument('--profile', type=Path, default=Path(__file__).with_name('perfil_lucidflex_50k_v2.json'))
     parser.add_argument('--completed-through', required=True, type=date.fromisoformat)
     parser.add_argument('--out', required=True, type=Path)
     args = parser.parse_args()

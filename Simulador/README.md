@@ -1,4 +1,44 @@
-# Simulador de evaluaciones v0.1
+# Simulador de evaluaciones v0.2
+
+## Cambio vigente — estudio conservador SIM002
+
+La [aclaración v0.2 del 14/11/2026](https://app.notion.com/p/41748909eb548198988adbb61b4f6303)
+añade dos criterios **del estudio, no una DLL oficial de Lucid**:
+
+1. Neto de la campaña completa ≤ −1.970 USD: suspender, también para pérdidas
+   más graves que −2.030. Agrupar los parciales antes de aplicar la regla;
+   restar la comisión elegida una sola vez.
+2. Saldo/equity evaluada ≤ L vigente + 30 USD: suspender por margen acumulado,
+   aunque la última campaña pierda menos de 1.970. El contacto con L por sí
+   mismo sigue siendo incumplimiento del umbral oficial modelado.
+
+Se separan L y barrera L+30; el colchón no modifica trailing, riesgo de la
+estrategia, SL, TP, contratos ni consistencia. Solo clasifica resultados.
+Antes de aprobar, se registran **todas las causas aplicables**; causa primaria:
+contacto con L, pérdida por campaña, colchón sin contacto con L, en ese orden.
+Una coincidencia no duplica intentos ni fees. Auditoría incluye barrera, L,
+margen y causas; resumen presenta causas primarias y causas concurrentes.
+Las causas concurrentes no deben sumarse como número de suspensos.
+
+Perfil CLI predeterminado: `perfil_lucidflex_50k_v2.json`. Nuevos inputs:
+`loss_buffer_usd=30.00`, `campaign_loss_limit_usd=1970.00` (importe positivo).
+Valores 0 y null respectivamente desactivan esas dos barreras, manteniendo L.
+El JSON original `perfil_lucidflex_50k.json` sigue intacto; su versión v1 se
+migra explícitamente con 0/null, por lo que no recibe reglas nuevas en silencio.
+Para reproducir SIM001 de forma exacta usar su commit
+`acfcbe77d6c5c9644e14a557dda1b1dcb75a9a62`; para contrastar sus decisiones con
+el motor actual pasar `--profile Simulador/perfil_lucidflex_50k.json` y otra salida.
+
+**42 pruebas**: las 28 anteriores se mantienen como regresión v1, más 14 v0.2.
+Se prueban −1.969,99 / −1.970 / −1.998 / −2.050; margen 30,01 / 30 / 29,99;
+pérdidas acumuladas; pérdida por campaña con margen amplio; prioridad sobre
+aprobación; parciales, comisiones 1,82/1,90 y una sola fee. Caso 6–8 enero:
+suspensión el 7, nueva cuenta y fee el 8, y suspensión de esa segunda cuenta.
+Si no existe entrada el 9 en el origen, no se fabrica: se respeta su calendario.
+
+SIM002 se guarda en otra carpeta e informe. SIM001, sus resultados, su perfil
+histórico y su commit permanecen conservados. Se mantienen todos los límites
+de la estimación con cierres y las aprobaciones condicionales descritos abajo.
 
 **Estimación con operaciones cerradas. Todas las aprobaciones son condicionales:**
 no acredita que se respetara el límite de pérdida flotante durante cada operación.
@@ -27,7 +67,7 @@ Perfil de investigación fijado a 13/11/2026, contrastado el 14/11/2026:
 | Slippage adicional | Cero, conservando fills originales |
 
 Los valores y los reinicios se configuran en `perfil_lucidflex_50k.json`. Copiar el
-perfil fuera del repo para escenarios privados; no modificarlo para reproducir esta entrega.
+perfil fuera del repo para escenarios privados; usar el v2 para SIM002 y el original para SIM001.
 `consistency_review_band=0.01` marca únicamente excesos de hasta un punto porcentual
 para revisión: **no cambia ninguna decisión**, no es tolerancia comercial.
 No se implementa ni se deduce la fórmula de tolerancia del ejemplo comercial.
@@ -114,7 +154,7 @@ Auditoría de sesión incluye el umbral anterior y el siguiente explícitamente.
 
 ## Pruebas y límites
 
-28 pruebas sintéticas incluyen los 12 casos manuales de §9 antes de BT004,
+Las 28 pruebas históricas sintéticas incluyen los 12 casos manuales de §9 antes de BT004,
 centavo sobre/bajo L, fechas repetidas/ausentes, corte de jornada, reinicios,
 denominadores, costes, censura, desconocidos y cambio de año. No contienen datos privados.
 La prueba del toque flotante demuestra prioridad si se acredita ese toque;

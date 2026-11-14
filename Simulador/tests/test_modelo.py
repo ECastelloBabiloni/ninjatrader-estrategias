@@ -3,8 +3,13 @@ import unittest
 from dataclasses import replace
 from datetime import date, datetime, timedelta
 from decimal import Decimal as D
-from Simulador.modelo import Campaign, Profile, Session, money, simulate
+from Simulador.modelo import Campaign, Profile as CurrentProfile, Session, money, simulate
 from Simulador.bt004 import campaign_from_parts, session_label
+
+
+def Profile():
+    """Keep all v0.1 examples as explicit historical regressions."""
+    return CurrentProfile.from_dict({'version': 'lucidflex50k-investigacion-2026-11-13-v1'})
 
 
 def days(*pnls):

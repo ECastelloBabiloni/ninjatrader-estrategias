@@ -3,7 +3,7 @@
 No reconstruye equity intradía. Un breach aportado como evidencia tiene
 prioridad, pero la ausencia de evidencia no acredita supervivencia flotante.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from statistics import median
@@ -24,7 +24,7 @@ def usd(value):
 
 @dataclass(frozen=True)
 class Profile:
-    version: str = "lucidflex50k-investigacion-2026-11-13-v1"
+    version: str = "lucidflex50k-estudio-2026-11-14-v2"
     rules_as_of: str = "2026-11-13"
     initial_balance: Decimal = Decimal("50000")
     profit_target: Decimal = Decimal("3000")
@@ -42,14 +42,22 @@ class Profile:
     session_rollover_hour: int = 18
     additional_slippage: Decimal = ZERO
     consistency_review_band: Decimal = Decimal("0.01")
+    loss_buffer_usd: Decimal = Decimal("30.00")
+    campaign_loss_limit_usd: Decimal | None = Decimal("1970.00")
 
     @classmethod
     def from_dict(cls, values):
         decimal_fields = {"initial_balance", "profit_target", "eod_drawdown",
                           "threshold_cap", "consistency", "attempt_fee",
                           "roundtrip_commission", "sensitivity_commission",
-                          "additional_slippage", "consistency_review_band"}
-        return cls(**{k: Decimal(str(v)) if k in decimal_fields else v
+                          "additional_slippage", "consistency_review_band",
+                          "loss_buffer_usd", "campaign_loss_limit_usd"}
+        values = dict(values)
+        # Explicit migration preserves the historical v1 JSON's semantics.
+        if values.get('version') == 'lucidflex50k-investigacion-2026-11-13-v1':
+            values.setdefault('loss_buffer_usd', '0.00')
+            values.setdefault('campaign_loss_limit_usd', None)
+        return cls(**{k: Decimal(str(v)) if k in decimal_fields and v is not None else v
                       for k, v in values.items()})
 
     def __post_init__(self):
@@ -65,13 +73,17 @@ class Profile:
         if self.threshold_cap < self.initial_balance - self.eod_drawdown:
             raise ValueError("Tope inferior al umbral inicial")
         if self.daily_loss_limit is not None or self.additional_slippage != 0:
-            raise ValueError("DLL y slippage adicional no implementados en v0.1")
+            raise ValueError("DLL y slippage adicional no implementados en v0.2")
         if type(self.max_contracts) is not int or self.max_contracts < 1:
             raise ValueError("Límite de contratos inválido")
         if type(self.restart_after_pass) is not bool or type(self.restart_after_fail) is not bool:
             raise ValueError("Reinicios deben ser booleanos")
         if not 0 <= self.session_rollover_hour <= 23:
             raise ValueError("Corte de jornada inválido")
+        if money(self.loss_buffer_usd) < 0:
+            raise ValueError("Colchón negativo")
+        if self.campaign_loss_limit_usd is not None and money(self.campaign_loss_limit_usd) <= 0:
+            raise ValueError("Límite de pérdida por campaña debe ser positivo o null")
 
 
 @dataclass(frozen=True)
@@ -121,6 +133,7 @@ class Attempt:
     gross: Decimal = ZERO
     commission: Decimal = ZERO
     near_consistency_events: int = 0
+    suspension_causes: list[str] = field(default_factory=list)
 
 
 def attempt_record(a, profile):
@@ -137,7 +150,25 @@ def attempt_record(a, profile):
                 calendar_days=(a.end-a.start).days+1,
                 censored=a.status in ("pending", "indeterminate"),
                 crosses_year=a.start.year != a.end.year,
-                near_consistency_events=a.near_consistency_events)
+                near_consistency_events=a.near_consistency_events,
+                suspension_causes='|'.join(a.suspension_causes))
+
+
+def suspension_causes(balance, limit, campaign_net, profile):
+    """Ordered causes, no duplicate attempt. Research barriers are NOT a DLL.
+
+    Official modeled contact takes precedence for the primary reason; all
+    applicable causes are retained. Buffer is distinguished from contact with L.
+    Campaign loss is tested once on the complete, commission-adjusted campaign.
+    """
+    causes = []
+    if balance <= limit:
+        causes.append('official_modeled_threshold_contact')
+    if profile.campaign_loss_limit_usd is not None and campaign_net <= -profile.campaign_loss_limit_usd:
+        causes.append('study_campaign_net_loss_limit')
+    if profile.loss_buffer_usd > 0 and limit < balance <= limit+profile.loss_buffer_usd:
+        causes.append('study_account_buffer')
+    return causes
 
 
 def simulate(sessions, profile):
@@ -189,18 +220,25 @@ def simulate(sessions, profile):
                 decision, active.status, active.reason = "size_breach", "failed", "contracts_above_limit"
             else:
                 net = c.net
-                if session.observed_pnl_min is not None and before+session.observed_pnl_min <= old_limit:
+                if (session.observed_pnl_min is not None and
+                        before+session.observed_pnl_min <= old_limit+profile.loss_buffer_usd):
                     breach = before + session.observed_pnl_min
                     active.balance = breach
-                    decision, active.status, active.reason = "proven_breach", "failed", "observed_equity_at_or_below_threshold"
+                    active.suspension_causes = suspension_causes(breach, old_limit, net, profile)
+                    active.status, active.reason = 'failed', active.suspension_causes[0]
+                    decision = 'proven_breach' if breach <= old_limit else 'observed_study_buffer'
                 else:
                     active.gross += c.gross
                     active.commission += c.commission
                     active.balance += net
                     active.best_day = max(active.best_day, net)
                     profit = active.balance-profile.initial_balance
-                    if active.balance <= old_limit:
-                        decision, active.status, active.reason = "closed_breach", "failed", "closed_balance_at_or_below_threshold"
+                    active.suspension_causes = suspension_causes(active.balance, old_limit, net, profile)
+                    if active.suspension_causes:
+                        active.status, active.reason = 'failed', active.suspension_causes[0]
+                        decision = {'official_modeled_threshold_contact': 'closed_breach',
+                                    'study_campaign_net_loss_limit': 'campaign_loss_limit',
+                                    'study_account_buffer': 'account_buffer'}[active.reason]
                     elif profit >= profile.profit_target:
                         # Exact Decimal multiplication; no commercial tolerance.
                         if active.best_day <= profit*profile.consistency:
@@ -222,6 +260,9 @@ def simulate(sessions, profile):
                           balance_before_usd=usd(before), balance_after_usd=usd(active.balance),
                           high_before_usd=usd(old_high), high_eod_usd=usd(active.high),
                           limit_during_session_usd=usd(old_limit), next_limit_usd=usd(active.threshold),
+                          study_barrier_during_session_usd=usd(old_limit+profile.loss_buffer_usd),
+                          remaining_margin_usd=usd(active.balance-old_limit),
+                          suspension_causes='|'.join(active.suspension_causes),
                           best_day_usd=usd(active.best_day), decision=decision,
                           status=active.status, conditional=True, breach_equity_usd=usd(breach)))
         if active.status in ("failed", "passed_conditional"):
@@ -269,6 +310,10 @@ def summarize(records, profile):
         years[buy]['fees_usd'] = usd(money(years[buy]['fees_usd'])+money(r['fee_usd']))
         years[end][r['status']] += 1
     return dict(level="estimación con operaciones cerradas", purchased=n, **counts,
+                failed_by_primary_reason={reason: sum(r['status']=='failed' and r['reason']==reason for r in records)
+                                          for reason in sorted({r['reason'] for r in records if r['status']=='failed'})},
+                failed_by_any_cause={cause: sum(cause in r['suspension_causes'].split('|') for r in records)
+                                     for cause in sorted({c for r in records for c in r['suspension_causes'].split('|') if c})},
                 fees_usd=usd(fees), cost_per_conditional_pass_usd=usd(fees/a) if a else None,
                 cost_per_pass_status="available" if a else "sin aprobaciones",
                 approval_over_purchased=f"{a}/{n}", approval_over_decided=f"{a}/{a+failed}",

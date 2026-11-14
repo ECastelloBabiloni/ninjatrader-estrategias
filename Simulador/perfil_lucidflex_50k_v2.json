@@ -1,0 +1,22 @@
+{
+  "version": "lucidflex50k-estudio-2026-11-14-v2",
+  "rules_as_of": "2026-11-13",
+  "initial_balance": "50000.00",
+  "profit_target": "3000.00",
+  "eod_drawdown": "2000.00",
+  "threshold_cap": "50100.00",
+  "consistency": "0.50",
+  "daily_loss_limit": null,
+  "max_contracts": 40,
+  "attempt_fee": "110.00",
+  "roundtrip_commission": "1.82",
+  "sensitivity_commission": "1.90",
+  "restart_after_pass": true,
+  "restart_after_fail": true,
+  "source_timezone": "America/New_York",
+  "session_rollover_hour": 18,
+  "additional_slippage": "0.00",
+  "consistency_review_band": "0.01",
+  "loss_buffer_usd": "30.00",
+  "campaign_loss_limit_usd": "1970.00"
+}
