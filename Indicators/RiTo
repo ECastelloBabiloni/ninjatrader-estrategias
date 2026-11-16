@@ -1,0 +1,95 @@
+#region Using declarations
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Xml.Serialization;
+using NinjaTrader.Cbi;
+using NinjaTrader.Gui;
+using NinjaTrader.Gui.Chart;
+using NinjaTrader.Gui.SuperDom;
+using NinjaTrader.Gui.Tools;
+using NinjaTrader.Data;
+using NinjaTrader.NinjaScript;
+using NinjaTrader.Core.FloatingPoint;
+
+#endregion
+
+
+
+#region NinjaScript generated code. Neither change nor remove.
+
+namespace NinjaTrader.NinjaScript.Indicators
+{
+	public partial class Indicator : NinjaTrader.Gui.NinjaScript.IndicatorRenderBase
+	{
+		
+		private _RiTo_PriceAnchoring[] cache_RiTo_PriceAnchoring;
+
+		
+		public _RiTo_PriceAnchoring _RiTo_PriceAnchoring(DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			return _RiTo_PriceAnchoring(Input, americanSessionTime, asiaSessionTime, europeSessionTime, asiaSessionArea_Colour, asiaSessionArea_Opacity, europeSessionArea_Colour, europeSessionArea_Opacity, americanSessionArea_Colour, americanSessionArea_Opacity, asiaSessionMax_DashStyle, asiaSessionMax_Colour, asiaSessionMax_Width, asiaSessionMin_DashStyle, asiaSessionMin_Colour, asiaSessionMin_Width, europeSessionMax_DashStyle, europeSessionMax_Colour, europeSessionMax_Width, europeSessionMin_DashStyle, europeSessionMin_Colour, europeSessionMin_Width, europeOpeningPrice_DashStyle, europeOpeningPrice_Colour, europeOpeningPrice_Width, americanOpeningPrice_DashStyle, americanOpeningPrice_Colour, americanOpeningPrice_Width, previousCashSessionClosingPrice_DashStyle, previousCashSessionClosingPrice_Colour, previousCashSessionClosingPrice_Width);
+		}
+
+
+		
+		public _RiTo_PriceAnchoring _RiTo_PriceAnchoring(ISeries<double> input, DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			if (cache_RiTo_PriceAnchoring != null)
+				for (int idx = 0; idx < cache_RiTo_PriceAnchoring.Length; idx++)
+					if (cache_RiTo_PriceAnchoring[idx].AmericanSessionTime == americanSessionTime && cache_RiTo_PriceAnchoring[idx].AsiaSessionTime == asiaSessionTime && cache_RiTo_PriceAnchoring[idx].EuropeSessionTime == europeSessionTime && cache_RiTo_PriceAnchoring[idx].AsiaSessionArea_Colour == asiaSessionArea_Colour && cache_RiTo_PriceAnchoring[idx].AsiaSessionArea_Opacity == asiaSessionArea_Opacity && cache_RiTo_PriceAnchoring[idx].EuropeSessionArea_Colour == europeSessionArea_Colour && cache_RiTo_PriceAnchoring[idx].EuropeSessionArea_Opacity == europeSessionArea_Opacity && cache_RiTo_PriceAnchoring[idx].AmericanSessionArea_Colour == americanSessionArea_Colour && cache_RiTo_PriceAnchoring[idx].AmericanSessionArea_Opacity == americanSessionArea_Opacity && cache_RiTo_PriceAnchoring[idx].AsiaSessionMax_DashStyle == asiaSessionMax_DashStyle && cache_RiTo_PriceAnchoring[idx].AsiaSessionMax_Colour == asiaSessionMax_Colour && cache_RiTo_PriceAnchoring[idx].AsiaSessionMax_Width == asiaSessionMax_Width && cache_RiTo_PriceAnchoring[idx].AsiaSessionMin_DashStyle == asiaSessionMin_DashStyle && cache_RiTo_PriceAnchoring[idx].AsiaSessionMin_Colour == asiaSessionMin_Colour && cache_RiTo_PriceAnchoring[idx].AsiaSessionMin_Width == asiaSessionMin_Width && cache_RiTo_PriceAnchoring[idx].EuropeSessionMax_DashStyle == europeSessionMax_DashStyle && cache_RiTo_PriceAnchoring[idx].EuropeSessionMax_Colour == europeSessionMax_Colour && cache_RiTo_PriceAnchoring[idx].EuropeSessionMax_Width == europeSessionMax_Width && cache_RiTo_PriceAnchoring[idx].EuropeSessionMin_DashStyle == europeSessionMin_DashStyle && cache_RiTo_PriceAnchoring[idx].EuropeSessionMin_Colour == europeSessionMin_Colour && cache_RiTo_PriceAnchoring[idx].EuropeSessionMin_Width == europeSessionMin_Width && cache_RiTo_PriceAnchoring[idx].EuropeOpeningPrice_DashStyle == europeOpeningPrice_DashStyle && cache_RiTo_PriceAnchoring[idx].EuropeOpeningPrice_Colour == europeOpeningPrice_Colour && cache_RiTo_PriceAnchoring[idx].EuropeOpeningPrice_Width == europeOpeningPrice_Width && cache_RiTo_PriceAnchoring[idx].AmericanOpeningPrice_DashStyle == americanOpeningPrice_DashStyle && cache_RiTo_PriceAnchoring[idx].AmericanOpeningPrice_Colour == americanOpeningPrice_Colour && cache_RiTo_PriceAnchoring[idx].AmericanOpeningPrice_Width == americanOpeningPrice_Width && cache_RiTo_PriceAnchoring[idx].PreviousCashSessionClosingPrice_DashStyle == previousCashSessionClosingPrice_DashStyle && cache_RiTo_PriceAnchoring[idx].PreviousCashSessionClosingPrice_Colour == previousCashSessionClosingPrice_Colour && cache_RiTo_PriceAnchoring[idx].PreviousCashSessionClosingPrice_Width == previousCashSessionClosingPrice_Width && cache_RiTo_PriceAnchoring[idx].EqualsInput(input))
+						return cache_RiTo_PriceAnchoring[idx];
+			return CacheIndicator<_RiTo_PriceAnchoring>(new _RiTo_PriceAnchoring(){ AmericanSessionTime = americanSessionTime, AsiaSessionTime = asiaSessionTime, EuropeSessionTime = europeSessionTime, AsiaSessionArea_Colour = asiaSessionArea_Colour, AsiaSessionArea_Opacity = asiaSessionArea_Opacity, EuropeSessionArea_Colour = europeSessionArea_Colour, EuropeSessionArea_Opacity = europeSessionArea_Opacity, AmericanSessionArea_Colour = americanSessionArea_Colour, AmericanSessionArea_Opacity = americanSessionArea_Opacity, AsiaSessionMax_DashStyle = asiaSessionMax_DashStyle, AsiaSessionMax_Colour = asiaSessionMax_Colour, AsiaSessionMax_Width = asiaSessionMax_Width, AsiaSessionMin_DashStyle = asiaSessionMin_DashStyle, AsiaSessionMin_Colour = asiaSessionMin_Colour, AsiaSessionMin_Width = asiaSessionMin_Width, EuropeSessionMax_DashStyle = europeSessionMax_DashStyle, EuropeSessionMax_Colour = europeSessionMax_Colour, EuropeSessionMax_Width = europeSessionMax_Width, EuropeSessionMin_DashStyle = europeSessionMin_DashStyle, EuropeSessionMin_Colour = europeSessionMin_Colour, EuropeSessionMin_Width = europeSessionMin_Width, EuropeOpeningPrice_DashStyle = europeOpeningPrice_DashStyle, EuropeOpeningPrice_Colour = europeOpeningPrice_Colour, EuropeOpeningPrice_Width = europeOpeningPrice_Width, AmericanOpeningPrice_DashStyle = americanOpeningPrice_DashStyle, AmericanOpeningPrice_Colour = americanOpeningPrice_Colour, AmericanOpeningPrice_Width = americanOpeningPrice_Width, PreviousCashSessionClosingPrice_DashStyle = previousCashSessionClosingPrice_DashStyle, PreviousCashSessionClosingPrice_Colour = previousCashSessionClosingPrice_Colour, PreviousCashSessionClosingPrice_Width = previousCashSessionClosingPrice_Width }, input, ref cache_RiTo_PriceAnchoring);
+		}
+
+	}
+}
+
+namespace NinjaTrader.NinjaScript.MarketAnalyzerColumns
+{
+	public partial class MarketAnalyzerColumn : MarketAnalyzerColumnBase
+	{
+		
+		public Indicators._RiTo_PriceAnchoring _RiTo_PriceAnchoring(DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			return indicator._RiTo_PriceAnchoring(Input, americanSessionTime, asiaSessionTime, europeSessionTime, asiaSessionArea_Colour, asiaSessionArea_Opacity, europeSessionArea_Colour, europeSessionArea_Opacity, americanSessionArea_Colour, americanSessionArea_Opacity, asiaSessionMax_DashStyle, asiaSessionMax_Colour, asiaSessionMax_Width, asiaSessionMin_DashStyle, asiaSessionMin_Colour, asiaSessionMin_Width, europeSessionMax_DashStyle, europeSessionMax_Colour, europeSessionMax_Width, europeSessionMin_DashStyle, europeSessionMin_Colour, europeSessionMin_Width, europeOpeningPrice_DashStyle, europeOpeningPrice_Colour, europeOpeningPrice_Width, americanOpeningPrice_DashStyle, americanOpeningPrice_Colour, americanOpeningPrice_Width, previousCashSessionClosingPrice_DashStyle, previousCashSessionClosingPrice_Colour, previousCashSessionClosingPrice_Width);
+		}
+
+
+		
+		public Indicators._RiTo_PriceAnchoring _RiTo_PriceAnchoring(ISeries<double> input , DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			return indicator._RiTo_PriceAnchoring(input, americanSessionTime, asiaSessionTime, europeSessionTime, asiaSessionArea_Colour, asiaSessionArea_Opacity, europeSessionArea_Colour, europeSessionArea_Opacity, americanSessionArea_Colour, americanSessionArea_Opacity, asiaSessionMax_DashStyle, asiaSessionMax_Colour, asiaSessionMax_Width, asiaSessionMin_DashStyle, asiaSessionMin_Colour, asiaSessionMin_Width, europeSessionMax_DashStyle, europeSessionMax_Colour, europeSessionMax_Width, europeSessionMin_DashStyle, europeSessionMin_Colour, europeSessionMin_Width, europeOpeningPrice_DashStyle, europeOpeningPrice_Colour, europeOpeningPrice_Width, americanOpeningPrice_DashStyle, americanOpeningPrice_Colour, americanOpeningPrice_Width, previousCashSessionClosingPrice_DashStyle, previousCashSessionClosingPrice_Colour, previousCashSessionClosingPrice_Width);
+		}
+	
+	}
+}
+
+namespace NinjaTrader.NinjaScript.Strategies
+{
+	public partial class Strategy : NinjaTrader.Gui.NinjaScript.StrategyRenderBase
+	{
+		
+		public Indicators._RiTo_PriceAnchoring _RiTo_PriceAnchoring(DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			return indicator._RiTo_PriceAnchoring(Input, americanSessionTime, asiaSessionTime, europeSessionTime, asiaSessionArea_Colour, asiaSessionArea_Opacity, europeSessionArea_Colour, europeSessionArea_Opacity, americanSessionArea_Colour, americanSessionArea_Opacity, asiaSessionMax_DashStyle, asiaSessionMax_Colour, asiaSessionMax_Width, asiaSessionMin_DashStyle, asiaSessionMin_Colour, asiaSessionMin_Width, europeSessionMax_DashStyle, europeSessionMax_Colour, europeSessionMax_Width, europeSessionMin_DashStyle, europeSessionMin_Colour, europeSessionMin_Width, europeOpeningPrice_DashStyle, europeOpeningPrice_Colour, europeOpeningPrice_Width, americanOpeningPrice_DashStyle, americanOpeningPrice_Colour, americanOpeningPrice_Width, previousCashSessionClosingPrice_DashStyle, previousCashSessionClosingPrice_Colour, previousCashSessionClosingPrice_Width);
+		}
+
+
+		
+		public Indicators._RiTo_PriceAnchoring _RiTo_PriceAnchoring(ISeries<double> input , DateTime americanSessionTime, DateTime asiaSessionTime, DateTime europeSessionTime, Brush asiaSessionArea_Colour, int asiaSessionArea_Opacity, Brush europeSessionArea_Colour, int europeSessionArea_Opacity, Brush americanSessionArea_Colour, int americanSessionArea_Opacity, int asiaSessionMax_DashStyle, Brush asiaSessionMax_Colour, int asiaSessionMax_Width, int asiaSessionMin_DashStyle, Brush asiaSessionMin_Colour, int asiaSessionMin_Width, int europeSessionMax_DashStyle, Brush europeSessionMax_Colour, int europeSessionMax_Width, int europeSessionMin_DashStyle, Brush europeSessionMin_Colour, int europeSessionMin_Width, int europeOpeningPrice_DashStyle, Brush europeOpeningPrice_Colour, int europeOpeningPrice_Width, int americanOpeningPrice_DashStyle, Brush americanOpeningPrice_Colour, int americanOpeningPrice_Width, int previousCashSessionClosingPrice_DashStyle, Brush previousCashSessionClosingPrice_Colour, int previousCashSessionClosingPrice_Width)
+		{
+			return indicator._RiTo_PriceAnchoring(input, americanSessionTime, asiaSessionTime, europeSessionTime, asiaSessionArea_Colour, asiaSessionArea_Opacity, europeSessionArea_Colour, europeSessionArea_Opacity, americanSessionArea_Colour, americanSessionArea_Opacity, asiaSessionMax_DashStyle, asiaSessionMax_Colour, asiaSessionMax_Width, asiaSessionMin_DashStyle, asiaSessionMin_Colour, asiaSessionMin_Width, europeSessionMax_DashStyle, europeSessionMax_Colour, europeSessionMax_Width, europeSessionMin_DashStyle, europeSessionMin_Colour, europeSessionMin_Width, europeOpeningPrice_DashStyle, europeOpeningPrice_Colour, europeOpeningPrice_Width, americanOpeningPrice_DashStyle, americanOpeningPrice_Colour, americanOpeningPrice_Width, previousCashSessionClosingPrice_DashStyle, previousCashSessionClosingPrice_Colour, previousCashSessionClosingPrice_Width);
+		}
+
+	}
+}
+
+#endregion
