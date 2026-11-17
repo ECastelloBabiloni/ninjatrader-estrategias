@@ -7,13 +7,15 @@ Código NinjaScript de desarrollo para histórico, Playback101 y Sim101.
 | Carpeta | Contenido |
 | --- | --- |
 | [Strategies](Strategies) | Estrategia AperturaNY_MAS_ExperimentoA y su auxiliar de dimensionamiento ExperimentoAMath |
-| [Indicators](Indicators) | Indicador compartido MAS_SesionNY |
+| [Indicators](Indicators) | MAS_SesionNY y el nuevo indicador independiente NivelesImportantesNY |
 | [Validacion](Validacion) | Pruebas de cálculos/horarios y compilación externa con bibliotecas NinjaTrader instaladas |
 | [Herramientas](Herramientas) | Exportador de resúmenes de los CSV de la estrategia |
 | [docs](docs) | Configuración, instalación, limitaciones y estado de validación |
 | [Simulador](Simulador) | Python: estimación de evaluaciones LucidFlex 50K con cierres; aprobaciones condicionales, pruebas sintéticas y perfil configurable |
 
 ## Versión vigente
+
+Indicador nuevo, 17/11/2026: [NivelesImportantesNY v0.1.0](docs/NivelesImportantesNY_v0.1.md), seis familias de niveles NY con retención configurable, noche, metadatos y consulta histórica sin leer dibujos. Fuente completo y pruebas sintéticas incluidos. Compilación externa comprobada; F5 y verificación visual en NinjaTrader pendientes. Su guía de instalación es independiente de la estrategia.
 
 Entrega 12/11/2026: [selección de sesiones regulares y cierre anticipado](docs/Entrega_2026-11-12.md). Código y pruebas externas completados; **F5, pruebas en plataforma y BT003 pendientes**. La nueva guía prevalece sobre las instrucciones históricas del 11/11.
 
