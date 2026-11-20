@@ -1,0 +1,10 @@
+{
+  "version": "lucidflex50k-retiradas-estudio-2026-11-20-v1",
+  "initial": "50000", "drawdown": "2000", "cap": "50100",
+  "minimum_campaigns": 2, "daily_stop": "150", "valid_day": "150",
+  "required_days": 5, "request_min": "500", "request_max": "2000",
+  "request_fraction": "0.50", "trader_fraction": "0.90",
+  "commission": "1.82", "sensitivity": "1.90",
+  "ignore_scaling": true, "rollover_hour": 18,
+  "max_sample_gap_seconds": 90
+}
