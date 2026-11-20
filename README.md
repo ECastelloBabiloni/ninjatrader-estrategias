@@ -15,6 +15,8 @@ Código NinjaScript de desarrollo para histórico, Playback101 y Sim101.
 
 ## Versión vigente
 
+Estrategia nueva, 20/11/2026: [RechazoNivelesNY 0.2.0-dev](docs/RechazoNivelesNY_v0.2.md), ruptura/rechazo de niveles, Stochastics estándar, MAS por franjas y recuperación opcional. Serie principal de un minuto y temporalidad de señales separada. Código y pruebas externas disponibles; F5, Playback y backtests pendientes. No modifica Experimento A ni indicadores existentes.
+
 Indicador nuevo, 17/11/2026: [NivelesImportantesNY v0.1.0](docs/NivelesImportantesNY_v0.1.md), seis familias de niveles NY con retención configurable, noche, metadatos y consulta histórica sin leer dibujos. Fuente completo y pruebas sintéticas incluidos. Compilación externa comprobada; F5 y verificación visual en NinjaTrader pendientes. Su guía de instalación es independiente de la estrategia.
 
 Entrega 12/11/2026: [selección de sesiones regulares y cierre anticipado](docs/Entrega_2026-11-12.md). Código y pruebas externas completados; **F5, pruebas en plataforma y BT003 pendientes**. La nueva guía prevalece sobre las instrucciones históricas del 11/11.
