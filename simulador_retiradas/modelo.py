@@ -30,6 +30,7 @@ class Profile:
     ignore_scaling: bool = True
     rollover_hour: int = 18
     max_sample_gap_seconds: int = 90
+    gap_policy: str = 'loss_and_restart'
 
     @classmethod
     def load(cls, obj):
@@ -54,6 +55,8 @@ class Profile:
             raise ValueError('Invalid session/count configuration')
         if self.max_sample_gap_seconds < 60:
             raise ValueError('Minute data requires gap allowance >=60s')
+        if self.gap_policy not in ('stop', 'loss_and_restart'):
+            raise ValueError('Unknown gap policy')
 
 
 def session_day(t, rollover=18):
@@ -87,7 +90,7 @@ class Campaign:
 
 
 def simulate(campaigns, sessions, profile, fee, mode='intradia', unknown_days=()):
-    """Stops the entire segment at INDETERMINADA. Never invents a restart."""
+    """Sample gaps may conservatively lose a simulated account; no fill is invented."""
     if mode not in ('cierres', 'intradia'):
         raise ValueError('Unknown evidence mode')
     by_day = {}
@@ -144,7 +147,7 @@ def simulate(campaigns, sessions, profile, fee, mode='intradia', unknown_days=()
                 daily.append(dict(account=a['id'],day=str(day),pnl=pnl,closed_campaigns=count,
                                   balance_close=a['balance'],L_intraday=threshold,status='INDETERMINADA'))
                 return final_result()
-            minimum, breach = a['balance'], None
+            minimum, breach, gap_loss = a['balance'], None, False
             if mode == 'intradia':
                 if not c.samples:
                     finish('INDETERMINADA', 'SIN_MUESTRAS', day)
@@ -156,6 +159,15 @@ def simulate(campaigns, sessions, profile, fee, mode='intradia', unknown_days=()
                 for s in c.samples:
                     gap = (s.time-previous).total_seconds()
                     if gap < 0 or gap > profile.max_sample_gap_seconds:
+                        if gap > profile.max_sample_gap_seconds and profile.gap_policy == 'loss_and_restart':
+                            row.update(decision='PERDIDA', reason='HUECO_ASUMIDO_PERDIDA',
+                                       gap_seconds=gap, gap_start=str(previous), event_time=str(s.time),
+                                       minimum_observed=minimum, daily_count=count, daily_pnl=pnl)
+                            a.update(loss_assumed_due_to_gap=True, gap_start=str(previous),
+                                     gap_end=str(s.time), gap_seconds=gap)
+                            finish('PERDIDA', 'HUECO_ASUMIDO_PERDIDA', day)
+                            terminal, gap_loss = True, True
+                            break
                         row.update(decision='INDETERMINADA', reason='HUECO_MUESTRAS',
                                    gap_seconds=gap, event_time=str(s.time))
                         finish('INDETERMINADA', 'HUECO_MUESTRAS', day)
@@ -168,6 +180,10 @@ def simulate(campaigns, sessions, profile, fee, mode='intradia', unknown_days=()
                         breach = s
                         break
                     previous = s.time
+            if gap_loss:
+                # Keep realised balance unchanged; unknown liquidation is not a realised -$2,000.
+                # The normal terminal path skips every remaining campaign today and resets tomorrow.
+                continue
             if breach is not None:
                 # This is observed equity, not an invented liquidation fill.
                 a['observed_equity_at_loss'] = a['balance']+breach.gross_equity-breach.bought*fee
@@ -249,7 +265,9 @@ def result(accounts, daily, audit, mode, fee):
         values = [a['calendar_days'] for a in accounts if a['status']==status]
         durations[status] = dict(count=len(values),minimum=min(values),median=median(values),
                                  maximum=max(values),histogram=dict(Counter(values)))
+    gap_losses = sum(a.get('reason') == 'HUECO_ASUMIDO_PERDIDA' for a in accounts)
     return dict(summary=dict(mode=mode, commission=fee, warning=WARNING, started=n, states=dict(states),
+                 lost_assumed_due_to_gap=gap_losses, lost_observed=states['PERDIDA']-gap_losses,
                  resolved=resolved, eligible_over_started=D(eligible)/n if n else None,
                  eligible_over_resolved=D(eligible)/resolved if resolved else None,
                  gross_requests=sum((a['request'] for a in accounts),ZERO),
@@ -257,3 +275,4 @@ def result(accounts, daily, audit, mode, fee):
                  fees='NO CALCULADOS', actual_payments='NO VERIFICADOS', loss_streaks=streaks,
                  duration_days=[a['calendar_days'] for a in accounts],duration_by_state=durations, by_end_year=annual),
                 accounts=accounts, daily=daily, campaigns=audit)
+

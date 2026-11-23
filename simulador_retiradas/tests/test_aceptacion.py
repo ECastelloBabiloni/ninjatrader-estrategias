@@ -15,7 +15,7 @@ class Acceptance(unittest.TestCase):
                 t=datetime.combine(day,datetime.min.time())+timedelta(hours=9,minutes=j*2)
                 cs.append(Campaign(str(len(cs)),t,t+timedelta(minutes=1),D(str(p)),1))
         if customize: customize(cs)
-        return simulate(cs,sessions,Profile(),fee,mode)
+        return simulate(cs,sessions,Profile(gap_policy='stop'),fee,mode)
 
     def test_stop_two_600(self):
         r=self.run_days([[300,300,999]])
@@ -145,3 +145,4 @@ class Acceptance(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+

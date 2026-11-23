@@ -1,4 +1,4 @@
-# Simulador independiente de primeras retiradas — v0.1
+# Simulador independiente de primeras retiradas — v0.2
 
 Implementa la [especificación fijada el 20/11/2026](https://app.notion.com/p/41e48909eb5481779246e9a00c3bdde4).
 No importa ni modifica `Simulador/` (evaluaciones), ni NinjaScript. No conecta cuentas.
@@ -33,8 +33,11 @@ un informe. No se publica ningún dato de mercado, exportación ni resultado pri
   se truncan a céntimos. La solicitud bruta se resta del saldo; umbral pasa a 50100.
 - Trailing EOD 2000, cap 50100; contacto intradía pierde. No se heredan colchón 30,
   límite por campaña 1970, consistencia ni fees del simulador de evaluaciones.
-- Nuevas cuentas solo en la siguiente jornada con entrada. Una indeterminada
-  detiene la secuencia, sin suponer cuándo habría terminado; no hay reinicio automático.
+- Nuevas cuentas solo en la siguiente jornada con entrada. Desde v0.2, el perfil
+  `gap_policy=loss_and_restart` descarta por incertidumbre una cuenta expuesta a un
+  hueco y omite el resto de la jornada. La siguiente jornada operable comienza con
+  saldo, H/L y contadores nuevos. `stop` conserva el comportamiento histórico.
+  Otras indeterminaciones (p. ej. una jornada sin evidencia) siguen deteniendo la secuencia.
 - Se conserva la campaña aceptada y todos sus fills. No se simulan señales no ejecutadas.
   El filtro no reproduce el estado contrafactual de cooldown/señales entre jornadas.
 
@@ -47,7 +50,13 @@ evita interpretar como ausencia de muestra la rama que retorna antes de emitir M
 No se usa ORDER como precio nuevo (puede contener una marca anterior).
 
 Huecos entre estas muestras superiores a 90 segundos (parámetro técnico configurable,
-no regla de Lucid) vuelven indeterminada una campaña aceptada, salvo pérdida ya observada.
+no regla de Lucid) descartan como perdida por incertidumbre una cuenta con campaña
+aceptada, salvo pérdida ya observada antes del hueco. Se identifica el motivo
+`HUECO_ASUMIDO_PERDIDA` y se separan `lost_assumed_due_to_gap` y `lost_observed`.
+Se conserva el saldo realizado previo, sin inventar una pérdida monetaria ni un fill.
+Un hueco en una campaña omitida no afecta a la cuenta. Desorden de muestras no se
+trata como pérdida: permanece indeterminado. La reserva de comisión completa continúa
+siendo una convención del modelo. No se interpola el recorrido ausente.
 Incluso con muestras continuas de un minuto pueden existir cruces entre muestras:
 ninguna retirada se presenta como pago ni como cumplimiento flotante acreditado.
 Una muestra que cruza L sí demuestra pérdida bajo el modelo. No se inventa un fill
@@ -74,3 +83,4 @@ Fuentes oficiales contrastadas para el perfil, sin presumir que existía en todo
 histórico: [retiradas](https://support.lucidtrading.com/en/articles/12945796-lucidflex-payouts)
 y [drawdown](https://support.lucidtrading.com/en/articles/12945815-lucidflex-drawdown).
 No se modelan evaluaciones, segundos retiros, DLL opcional, Live ni tiempos de pago.
+

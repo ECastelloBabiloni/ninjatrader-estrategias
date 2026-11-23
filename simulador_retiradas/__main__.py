@@ -63,7 +63,7 @@ def main():
             'Cierre completo inferido del calendario archivado y continuidad posterior del registro; no auditoría de todas las barras.',
             'Última jornada truncada excluida. MARK: cierres de minuto; fills adicionales. Riesgo entre muestras desconocido.',
             'No se importan señales no ejecutadas; el filtro de campañas no reconstruye estados contrafactuales de la estrategia.',
-            'INDETERMINADA detiene la secuencia; no se inventa reinicio. Escalado ignorado por autorización expresa.',
+            'Política de huecos: '+profile.gap_policy+'. loss_and_restart cuenta PERDIDA/HUECO_ASUMIDO_PERDIDA, omite el resto del día y reinicia la siguiente jornada operable. No afirma pérdida real ni inventa liquidación. Otras indeterminaciones detienen la secuencia. Escalado ignorado.',
             'Comisión 1,82 principal y 1,90 sensibilidad, no tarifas actuales de Lucid. Sin slippage adicional.',
             'Si se pierde intradía, balance es el realizado anterior y observed_equity_at_loss es la muestra de pérdida; no se inventa fill de liquidación.',
             'Archivo de cuentas: balance es anterior a solicitud, post_balance refleja débito bruto; cash_estimated es 90%.',
@@ -79,3 +79,4 @@ def main():
 
 
 if __name__=='__main__':main()
+
